@@ -1,0 +1,30 @@
+{
+  "name": "pm",
+  "version": "1.0.0",
+  "description": "Unified project management - task design, backlog management, agent worktrees, code review, and dependency tracking",
+  "commands": {
+    "pm": ".opencode/commands/pm.md",
+    "pm-list": ".opencode/commands/pm-list.md",
+    "pm-help": ".opencode/commands/pm-help.md",
+    "pm-design": ".opencode/commands/pm-design.md",
+    "pm-init": ".opencode/commands/pm-init.md",
+    "pm-prd": ".opencode/commands/pm-prd.md",
+    "pm-digest": ".opencode/commands/pm-digest.md",
+    "pm-read": ".opencode/commands/pm-read.md",
+    "pm-launch": ".opencode/commands/pm-launch.md",
+    "pm-work": ".opencode/commands/pm-work.md",
+    "pm-review": ".opencode/commands/pm-review.md",
+    "pm-design-review": ".opencode/commands/pm-design-review.md",
+    "pm-from-review": ".opencode/commands/pm-from-review.md",
+    "pm-complete": ".opencode/commands/pm-complete.md",
+    "pm-prune": ".opencode/commands/pm-prune.md",
+    "pm-stop": ".opencode/commands/pm-stop.md",
+    "pm-migrate": ".opencode/commands/pm-migrate.md"
+  },
+  "agents": {
+    "task-auditor": ".opencode/agents/task-auditor.md",
+    "code-auditor": ".opencode/agents/code-auditor.md",
+    "dependency-analyzer": ".opencode/agents/dependency-analyzer.md",
+    "code-reviewer": ".opencode/agents/code-reviewer.md"
+  }
+}

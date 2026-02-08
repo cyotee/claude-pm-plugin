@@ -1,0 +1,8 @@
+{
+  "name": "pm",
+  "description": "Unified project management - task design, backlog management, agent worktrees, code review, and dependency tracking",
+  "version": "1.0.0",
+  "author": {
+    "name": "cyotee"
+  }
+}
