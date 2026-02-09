@@ -1,10 +1,10 @@
 ---
-description: Transition task to code review mode in worktree
+description: Transition task to code review mode after implementation (not task definition audit - see /pm:design-review for that)
 ---
 
 # Transition Task to Code Review Mode
 
-Update PROMPT.md in an existing worktree to switch from implementation to code review mode. This reviews the implementation code, NOT the task definition.
+Update PROMPT.md in an existing worktree to switch from implementation to **code review** mode. This reviews the implementation code, NOT the task definition.
 
 **For task definition audits** (checking TASK.md quality), use `/pm-design-review` instead.
 
@@ -12,63 +12,232 @@ Update PROMPT.md in an existing worktree to switch from implementation to code r
 
 ## Instructions
 
-### Step 1: Validate Task
+### Phase 1: Validate Task
 
-1. Extract task ID from arguments (e.g., "CRANE-003").
-2. Find task directory and verify it exists.
-3. Check task status in INDEX.md:
-   - "Complete" -- abort, nothing to review
-   - "In Review" -- abort, already in review mode
-   - "In Progress" or "Ready" -- proceed
-4. Find existing worktree. Must have a worktree to transition.
+1. **Extract task ID** from arguments (e.g., "CRANE-003").
 
-### Step 2: Initialize Review Files
+2. **Find task directory:**
+   ```bash
+   ls -d tasks/${TASK_ID}-* 2>/dev/null
+   ```
 
-Create/update `REVIEW.md` in the task directory with sections for: Clarifying Questions, Review Findings (with severity and status per finding), Suggestions (with priority and user response tracking), and Review Summary.
+3. **Check task status in INDEX.md:**
+   - Can be "In Progress" (normal flow) or "Ready" (if user wants early review)
+   - If "Complete": "Task is already complete. Nothing to review."
+   - If "In Review": "Task is already in review mode. Start a new session in the worktree."
 
-### Step 3: Update PROMPT.md
+4. **Find worktree:**
+   ```bash
+   git worktree list | grep "${BRANCH_NAME}"
+   ```
+   - Must have an existing worktree to transition
 
-Update PROMPT.md in the worktree to review mode. Include required reading (TASK.md, PRD.md, PROGRESS.md, REVIEW.md), review instructions (verify acceptance criteria, check tests, look for bugs/security issues, document findings, write suggestions), and promise protocol.
+### Phase 2: Initialize Review Files
 
-### Step 4: Update State and INDEX
+1. **Create/update REVIEW.md** in task directory (if not exists):
 
-1. Update state file mode to "review".
-2. Update INDEX.md status to "In Review".
+```markdown
+# Code Review: {PREFIX}-{NNN}
 
-### Step 5: Output Instructions
+**Reviewer:** (pending)
+**Review Started:** {TODAY}
+**Status:** In Progress
+
+---
+
+## Clarifying Questions
+
+Questions asked to understand review criteria:
+
+(Questions and answers will be recorded here during review)
+
+---
+
+## Review Findings
+
+### Finding 1: (pending)
+**File:** (pending)
+**Severity:** (pending)
+**Description:** (pending)
+**Status:** Open
+**Resolution:** (pending)
+
+---
+
+## Suggestions
+
+Actionable items for follow-up tasks:
+
+### Suggestion 1: (pending)
+**Priority:** (pending)
+**Description:** (pending)
+**Affected Files:**
+- (pending)
+**User Response:** (pending)
+**Notes:** (pending)
+
+---
+
+## Review Summary
+
+**Findings:** (pending)
+**Suggestions:** (pending)
+**Recommendation:** (pending)
+
+---
+
+**When review complete, output:** `<promise>PHASE_DONE</promise>`
+```
+
+### Phase 3: Update PROMPT.md
+
+Update PROMPT.md in the worktree to review mode:
+
+```markdown
+# Agent Task Assignment
+
+**Task:** {PREFIX}-{NNN} - {Title}
+**Repo:** {REPO_NAME}
+**Mode:** Code Review
+**Task Directory:** tasks/{PREFIX}-{NNN}-{kebab-name}/
+
+## Required Reading
+
+1. `tasks/{PREFIX}-{NNN}-{kebab-name}/TASK.md` - Requirements to verify
+2. `PRD.md` - Project context and standards (if exists)
+3. `tasks/{PREFIX}-{NNN}-{kebab-name}/PROGRESS.md` - Implementation notes
+4. `tasks/{PREFIX}-{NNN}-{kebab-name}/REVIEW.md` - Your review document
+
+## Review Instructions
+
+1. Read TASK.md to understand what was required
+2. Read PROGRESS.md to understand what was implemented
+
+3. **If unclear on review criteria:**
+   - Use AskUserQuestion to clarify expectations
+   - Write questions and answers to REVIEW.md "Clarifying Questions" section
+
+4. **Review the code:**
+   - Check all acceptance criteria in TASK.md are met
+   - Verify test coverage
+   - Look for bugs, edge cases, security issues
+   - Update REVIEW.md with findings as you go
+   - Mark findings as Resolved if you answer your own questions
+
+5. **Write suggestions:**
+   - Document actionable improvements in REVIEW.md
+   - Prioritize by severity
+   - These will be used to create follow-up tasks
+
+6. When review is complete: `<promise>PHASE_DONE</promise>`
+7. If blocked: `<promise>BLOCKED: [reason]</promise>`
+
+## On Context Compaction
+
+If context is compacted or you're resuming:
+1. Re-read this PROMPT.md
+2. Re-read REVIEW.md for your prior findings
+3. Continue review from where you left off
+```
+
+### Phase 4: Update State File
+
+1. **Update state file** (if exists):
+   ```yaml
+   ---
+   active: true
+   iteration: 1
+   max_iterations: {N or 0}
+   started_at: "{ISO_TIMESTAMP}"
+   task_id: "{TASK_ID}"
+   mode: "review"
+   ---
+   ```
+
+### Phase 5: Update INDEX.md
+
+1. **Update task status** to "In Review":
+   ```markdown
+   | {PREFIX}-{NNN} | {Title} | In Review | {Deps} | feature/{PREFIX}-{NNN}-{name} |
+   ```
+
+### Phase 6: Output Instructions
 
 ```
-REVIEW MODE: {PREFIX}-{NNN} - {Title}
+═══════════════════════════════════════════════════════════════════
+ REVIEW MODE: {PREFIX}-{NNN} - {Title}
+═══════════════════════════════════════════════════════════════════
 
 PROMPT.md updated to review mode in existing worktree.
 
-Step 1: Exit current Claude session (if any)
-Step 2: cd {ABSOLUTE_WORKTREE_PATH}
-        claude --dangerously-skip-permissions
-Step 3: /up:prompt
+## Step 1: Exit current Claude session (if any)
 
-After Review:
-- If review passed: /pm-complete {TASK_ID}
-- If changes needed: Work on changes, then review again
+The implementation agent should have exited after PHASE_DONE.
 
-TIP: Use a different model for review for a fresh perspective.
+## Step 2: Start fresh Claude session:
+
+cd {ABSOLUTE_WORKTREE_PATH}
+claude --dangerously-skip-permissions
+
+## Step 3: Give Claude this prompt:
+
+/up:prompt
+
+The reviewer will:
+- Read PROMPT.md (now in review mode)
+- Read TASK.md, PROGRESS.md for context
+- Ask clarifying questions if needed (saved to REVIEW.md)
+- Review code for correctness and completeness
+- Document findings in REVIEW.md
+- Output <promise>PHASE_DONE</promise> when done
+
+## After Review
+
+When the reviewer exits, you control the next step:
+
+1. **If review passed:** `/pm-complete {TASK_ID}` - Mark task complete
+2. **If changes needed:** Work on the changes, then review again
+
+## TIP: Use a Different Model for Review!
+
+For a fresh perspective, use a different model:
+
+claude --model claude-sonnet-4-20250514 --dangerously-skip-permissions
+
+═══════════════════════════════════════════════════════════════════
 ```
 
-### Step 6: Create Exit Flag and Promise
+### Phase 7: Create Exit Flag and Output Promise
 
-Create `.claude/backlog-exit` flag, then output:
+**CRITICAL:** This allows the current session to exit cleanly.
+
+```bash
+mkdir -p .claude
+touch .claude/backlog-exit
+```
+
+Then output this promise tag:
+
 ```
 <promise>BLOCKED: review_mode_configured_start_new_session</promise>
 ```
 
-Do not output anything after the promise tag.
+**Do not output anything after the promise tag.**
+
+## Why Same Worktree?
+
+- Reviewing the same files that were implemented
+- No need to duplicate the environment
+- User can choose different model for review (fresh perspective)
+- Simpler workflow - just update PROMPT.md and start new session
 
 ## Error Handling
 
-- **No task ID:** "Usage: /pm-review <task-id>"
+- **No task ID provided:** "Usage: /pm-review <task-id>"
 - **Task not found:** Show available task IDs
-- **No worktree exists:** "Use /pm-launch first"
-- **Already in review:** "Task is already in review mode"
+- **Task not in progress:** Show current status and suggest appropriate action
+- **No worktree exists:** "Task has no worktree. Use /pm-launch first."
+- **Already in review:** "Task is already in review mode."
 
 ## Related Commands
 

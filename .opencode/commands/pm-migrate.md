@@ -4,7 +4,7 @@ description: Migrate worktree branch names to include task ID prefix
 
 # Migrate Worktree Branch Names
 
-Migrate existing worktrees from the old naming convention (`feature/{kebab-name}`) to the new convention (`feature/{TASK_ID}-{kebab-name}`). This ensures every worktree branch includes its task ID for easy matching.
+Migrate existing worktrees from the old naming convention (`feature/{kebab-name}`) to the new convention (`feature/{TASK_ID}-{kebab-name}`). This ensures every worktree branch includes its task ID for easy matching by humans and agents.
 
 **Arguments:** $ARGUMENTS
 
@@ -12,16 +12,40 @@ Migrate existing worktrees from the old naming convention (`feature/{kebab-name}
 
 ### Step 1: Detect Dry-Run Flag
 
-If `--dry-run` is in arguments, run in preview mode (no changes applied).
+```bash
+DRY_RUN=""
+if [[ "$ARGUMENTS" == *"--dry-run"* ]]; then
+  DRY_RUN="--dry-run"
+  echo "Running in DRY RUN mode (no changes will be made)"
+  echo ""
+fi
+```
 
 ### Step 2: Verify Prerequisites
 
-1. Check `tasks/INDEX.md` exists. If not: "Run /pm-init first."
-2. Check migration script exists at `${CLAUDE_PLUGIN_ROOT}/scripts/wt-migrate-prefix.sh`.
+1. **Check tasks/INDEX.md exists:**
+   ```bash
+   if [[ ! -f "tasks/INDEX.md" ]]; then
+     echo "No tasks/INDEX.md found. Run /pm-init first."
+     exit 1
+   fi
+   ```
 
-### Step 3: Run Migration
+2. **Check migration script exists:**
+   ```bash
+   SCRIPT="${CLAUDE_PLUGIN_ROOT}/scripts/wt-migrate-prefix.sh"
+   if [[ ! -f "$SCRIPT" ]]; then
+     echo "ERROR: Migration script not found at $SCRIPT"
+     exit 1
+   fi
+   ```
 
-Execute the migration script with the repo root path (and `--dry-run` flag if applicable).
+### Step 3: Run Migration Script
+
+```bash
+REPO_ROOT=$(git rev-parse --show-toplevel)
+"${CLAUDE_PLUGIN_ROOT}/scripts/wt-migrate-prefix.sh" $DRY_RUN "$REPO_ROOT"
+```
 
 The script will:
 - Scan INDEX.md for tasks with active worktrees
@@ -34,15 +58,47 @@ The script will:
 
 ### Step 4: Report Results
 
-**If dry-run:** Show what would change, suggest re-running without `--dry-run`.
+**If dry-run:**
+```
+═══════════════════════════════════════════════════════════════════
+ DRY RUN COMPLETE
+═══════════════════════════════════════════════════════════════════
 
-**If live run:** Show what changed (branches renamed, directories moved, INDEX.md updated), suggest running `git worktree list` to verify, and note that active worktree sessions will need restarting.
+No changes were made. Re-run without --dry-run to apply:
 
-## Arguments Reference
+  /pm-migrate
 
-| Argument | Description |
-|----------|-------------|
-| `--dry-run` | Preview changes without applying |
+═══════════════════════════════════════════════════════════════════
+```
+
+**If live run:**
+```
+═══════════════════════════════════════════════════════════════════
+ MIGRATION COMPLETE
+═══════════════════════════════════════════════════════════════════
+
+Worktree branches now include task ID prefixes.
+
+## What Changed
+
+- Branches renamed: feature/{name} -> feature/{TASK_ID}-{name}
+- Worktree directories moved to match
+- INDEX.md updated with new branch names
+- Changes committed
+
+## Verify
+
+Run: git worktree list
+
+All branches should show task ID prefixes (e.g., feature/CRANE-003-utils).
+
+## Note for Active Worktree Sessions
+
+If you have Claude sessions running in migrated worktrees, they will
+need to be restarted since their working directory path has changed.
+
+═══════════════════════════════════════════════════════════════════
+```
 
 ## Error Handling
 
@@ -50,6 +106,17 @@ The script will:
 - **No active worktrees:** "No worktrees to migrate" (not an error)
 - **Branch already has task ID:** Skipped automatically
 - **Branch rename fails:** Reported per-worktree, others continue
+- **Worktree move fails:** Falls back to manual move + prune
+
+## Examples
+
+```bash
+# Preview what would change
+/pm-migrate --dry-run
+
+# Apply migration
+/pm-migrate
+```
 
 ## Related Commands
 

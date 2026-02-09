@@ -1,5 +1,5 @@
 ---
-description: Read and display a specific task's full details
+description: Read and display a specific task from tasks/
 ---
 
 # Read Task
@@ -10,55 +10,116 @@ Display the full content of a specific task from its task directory.
 
 ## Instructions
 
-### Step 1: Find Task
+1. **Extract task ID** from arguments (e.g., "CRANE-003", "IDX-007").
 
-1. Extract task ID from arguments (e.g., "CRANE-003", "IDX-007").
-2. Find task directory: `tasks/{TASK_ID}-*/`
-3. If not found, show available task IDs from tasks/INDEX.md.
+2. **Find task directory:**
+   ```bash
+   # Find task directory matching the ID
+   ls -d tasks/${TASK_ID}-* 2>/dev/null
+   ```
 
-### Step 2: Read Task Files
+3. **If task not found:**
+   ```
+   Task {TASK_ID} not found.
 
-- `tasks/{ID}-{name}/TASK.md` - Requirements
-- `tasks/{ID}-{name}/PROGRESS.md` - Implementation progress (if exists)
-- `tasks/{ID}-{name}/REVIEW.md` - Review notes (if exists)
+   Available tasks:
+   - {PREFIX}-001: {Title}
+   - {PREFIX}-002: {Title}
+   ...
 
-### Step 3: Display Formatted Output
+   Use /pm to see all tasks.
+   ```
+
+4. **Read task files:**
+   - `tasks/{ID}-{name}/TASK.md` - Requirements
+   - `tasks/{ID}-{name}/PROGRESS.md` - Implementation progress (if exists)
+   - `tasks/{ID}-{name}/REVIEW.md` - Review notes (if exists)
+
+5. **Display formatted output:**
 
 ```
-TASK: {PREFIX}-{NNN} - {Title}
+═══════════════════════════════════════════════════════════════════
+ TASK: {PREFIX}-{NNN} - {Title}
+═══════════════════════════════════════════════════════════════════
 
-Status: {Status}
-Dependencies: {Dependencies or "None"}
-Worktree: {Branch or "Not started"}
-Directory: tasks/{PREFIX}-{NNN}-{kebab-name}/
+**Status:** {Status from TASK.md}
+**Dependencies:** {Dependencies or "None"}
+**Worktree:** {Worktree branch or "Not started"}
+**Directory:** tasks/{PREFIX}-{NNN}-{kebab-name}/
+
+---
 
 ## Requirements (TASK.md)
-{Full content}
+
+{Full content of TASK.md}
+
+---
 
 ## Progress (PROGRESS.md)
-Last checkpoint: {summary}
-{Latest session log or "No progress recorded yet"}
+
+**Last checkpoint:** {Last checkpoint summary}
+
+{Latest session log entry or "No progress recorded yet"}
+
+---
 
 ## Review (REVIEW.md)
-Status: {Review status or "Not yet reviewed"}
-{Summary or "No review yet"}
+
+**Status:** {Review status or "Not yet reviewed"}
+
+{Review summary or "No review yet"}
+
+═══════════════════════════════════════════════════════════════════
 
 ## Actions
+
 - To launch agent: /pm-launch {PREFIX}-{NNN}
 - To review: /pm-review {PREFIX}-{NNN}
 - To complete: /pm-complete {PREFIX}-{NNN}
 ```
 
+## Output Sections
+
+### Requirements
+Full content of TASK.md including:
+- Description
+- User stories
+- Acceptance criteria
+- Files to create/modify
+- Inventory check
+- Completion criteria
+
+### Progress
+From PROGRESS.md:
+- Current checkpoint status
+- Latest session log entry
+- Build/test status
+
+### Review
+From REVIEW.md (if exists):
+- Review status
+- Number of findings
+- Recommendations
+
 ## Error Handling
 
-- **No task ID provided:** "Usage: /pm-read <task-id>"
-- **Task not found:** Show available task IDs
+- **No task ID provided:** "Usage: /pm-read <task-id> (e.g., /pm-read CRANE-003)"
+- **Task doesn't exist:** Show available task IDs from tasks/INDEX.md
 - **No tasks/ directory:** "Run /pm-init to set up task management"
 - **Missing TASK.md:** "Task directory exists but TASK.md is missing"
 
-## Related Commands
+## Examples
 
-- `/pm-launch <ID>` - Launch agent worktree
-- `/pm-review <ID>` - Transition to review mode
-- `/pm-complete <ID>` - Complete task
-- `/pm` - View all tasks
+```bash
+# Read task by ID
+/pm-read CRANE-003
+
+# Read task by full directory name
+/pm-read CRANE-003-uniswap-v4-utils
+```
+
+## Notes
+
+- Task IDs are permanent and never renumbered
+- This is a read-only command - it does not modify any files
+- Use `/pm-launch <ID>` to create a worktree and start working on a task

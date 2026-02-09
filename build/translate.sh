@@ -50,8 +50,8 @@ for cmd_file in "$PLUGIN_ROOT/commands/"*.md; do
 
   out_path="$OPENCODE_DIR/commands/$out_name"
 
-  # Extract description from frontmatter
-  description=$(sed -n '/^---$/,/^---$/{ /^description:/{ s/^description: *//; p; } }' "$cmd_file")
+  # Extract description from frontmatter (portable awk)
+  description=$(awk 'BEGIN{in=0} /^---$/{ if(in==0){in=1; next} else {exit} } in==1 && /^description:/{sub(/^description:[ \t]*/, ""); print}' "$cmd_file")
 
   if [[ -z "$description" ]]; then
     log_warn "Skipping $basename (no description)"
@@ -87,9 +87,9 @@ for agent_file in "$PLUGIN_ROOT/agents/"*.md; do
   basename="$(basename "$agent_file" .md)"
   out_path="$OPENCODE_DIR/agents/$basename.md"
 
-  # Extract description and model from Claude frontmatter
-  description=$(sed -n '/^---$/,/^---$/{ /^description:/{ s/^description: *//; p; } }' "$agent_file")
-  model=$(sed -n '/^---$/,/^---$/{ /^model:/{ s/^model: *//; p; } }' "$agent_file")
+  # Extract description and model from Claude frontmatter (portable awk)
+  description=$(awk 'BEGIN{in=0} /^---$/{ if(in==0){in=1; next} else {exit} } in==1 && /^description:/{sub(/^description:[ \t]*/, ""); print}' "$agent_file")
+  model=$(awk 'BEGIN{in=0} /^---$/{ if(in==0){in=1; next} else {exit} } in==1 && /^model:/{sub(/^model:[ \t]*/, ""); print}' "$agent_file")
 
   if [[ -z "$description" ]]; then
     log_warn "Skipping agent $basename (no description)"

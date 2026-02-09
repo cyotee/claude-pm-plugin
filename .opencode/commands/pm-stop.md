@@ -10,9 +10,9 @@ Emergency escape hatch when the stop hook is looping and you need to exit.
 
 ## Instructions
 
-### Step 1: Create Exit Flag
+This command creates an exit flag that the stop hook will honor, then outputs a promise tag.
 
-Create the exit flag file that the stop hook will honor:
+### Step 1: Create Exit Flag
 
 ```bash
 mkdir -p .claude
@@ -27,4 +27,4 @@ Output the following (the stop hook will see this and allow exit):
 <promise>BLOCKED: user_forced_stop</promise>
 ```
 
-Do not output anything else after the promise tag.
+**Do not output anything else after the promise tag.**
